@@ -19,6 +19,23 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+Future<InternetAddress?> getLocalAddress() async {
+  final list = await NetworkInterface.list();
+
+  for (var interface in list) {
+    if (interface.name != "wlan0" && interface.name != "eth0") {
+      continue;
+    }
+
+    for (var address in interface.addresses) {
+      if (address.type == InternetAddressType.IPv4) {
+        return address;
+      }
+    }
+  }
+  return null;
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -50,10 +67,10 @@ class _MyHomePageState extends State<MyHomePage> {
   StreamController<Uint8List>? streamController;
   Stream<Uint8List>? stream;
   ServerSocket? serverSocket;
+  InternetAddress? address;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     cameraController = CameraController(
       _cameras[0],
@@ -62,6 +79,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
     log("Selected resolution preset: ${cameraController.resolutionPreset}");
     log("Selected camera: ${cameraController.cameraId}");
+
+    getLocalAddress().then((x) {
+      setState(() {
+        address = x;
+      });
+    });
 
     cameraController
         .initialize()
@@ -149,7 +172,9 @@ class _MyHomePageState extends State<MyHomePage> {
             !cameraDenied
                 ? !started
                       ? CameraPreview(cameraController)
-                      : Text("Streaming! (Preview is disabled)")
+                      : Text(
+                          "Streaming! (Preview is disabled)\n${address != null ? "Address: http://${address?.address}:8080" : "Unknown address (check internet connection)"}",
+                        )
                 : const Text("Camera use was denied"),
           ],
         ),
