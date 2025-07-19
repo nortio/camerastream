@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:camerastream/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as imglib;
 import 'package:quickjpeg/quickjpeg.dart' as qj;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -63,10 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
   late CameraController cameraController;
   bool cameraDenied = false;
   bool started = false;
-  final encoder = imglib.JpegEncoder(quality: 80);
-  StreamController<Uint8List>? streamController;
-  Stream<Uint8List>? stream;
-  ServerSocket? serverSocket;
+  //final encoder = imglib.JpegEncoder(quality: 80);
+  var streamController = StreamController<Uint8List>.broadcast();
+  late ServerSocket serverSocket;
+  Set<Socket> connectedClients = {};
   InternetAddress? address;
 
   @override
@@ -114,23 +113,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> initServer() async {
     serverSocket = await ServerSocket.bind("0.0.0.0", 8080);
-    serverSocket?.listen((socket) {
-      log("New connection: ${socket.address.address}:${socket.port}");
-      final controller = streamController;
-      if (controller == null) {
-        send404(socket);
-        return;
-      }
+    serverSocket.listen(
+      (socket) {
+        log("New connection: ${socket.address.address}:${socket.port}");
 
-      if (controller.hasListener) {
-        send404(socket);
-      }
+        if (streamController.isClosed) {
+          send404(socket);
+        }
 
-      if (stream != null) {
         socket.write(
           "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n",
         );
-        final sub = stream!.listen((e) {
+
+        final sub = streamController.stream.listen((e) {
           socket.write(
             "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: ${e.length}\r\n\r\n",
           );
@@ -138,16 +133,48 @@ class _MyHomePageState extends State<MyHomePage> {
           socket.write("\r\n");
         });
 
-        socket.done.then((s) {
-          sub.cancel();
+        socket.listen(
+          (d) {},
+          onError: (e, st) {
+            log("Error on socket listen: $e\n$st");
+            sub.cancel();
+            setState(() {
+              connectedClients.remove(socket);
+            });
+          },
+          onDone: () {
+            log("Socket ${socket.address} closed");
+            sub.cancel();
+            setState(() {
+              connectedClients.remove(socket);
+            });
+          },
+          cancelOnError: true,
+        );
+
+        setState(() {
+          connectedClients.add(socket);
         });
-      }
+      },
+      onError: (e) {
+        log("ServerSocket error: $e");
+      },
+    );
+  }
+
+  Future<void> disconnectAllClients() async {
+    for (final client in connectedClients) {
+      client.close();
+    }
+
+    setState(() {
+      connectedClients.clear();
     });
   }
 
   void send404(Socket socket) {
     socket.write(
-      "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<h1>404</h1>",
+      "HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<h1>404</h1>",
     );
     socket.close();
   }
@@ -173,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ? !started
                       ? CameraPreview(cameraController)
                       : Text(
-                          "Streaming! (Preview is disabled)\n${address != null ? "Address: http://${address?.address}:8080" : "Unknown address (check internet connection)"}",
+                          "Streaming! (Preview is disabled)\n${address != null ? "Address: http://${address?.address}:8080" : "Unknown address (check internet connection)"}\nConnected clients: ${connectedClients.length}",
                         )
                 : const Text("Camera use was denied"),
           ],
@@ -191,12 +218,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   return;
                 }
 
+                if (streamController.isClosed) {
+                  streamController = StreamController<Uint8List>.broadcast();
+                }
+
                 setState(() {
                   started = true;
                 });
-
-                streamController = StreamController<Uint8List>();
-                stream = streamController?.stream;
 
                 WakelockPlus.enable();
 
@@ -253,11 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                   return;
 */
-                  if (streamController == null) {
-                    return;
-                  }
-
-                  if (!streamController!.hasListener) {
+                  if (!streamController.hasListener) {
                     return;
                   }
 
@@ -265,14 +289,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   //final bytes = encoder.encode(image, singleFrame: true);
 
                   //streamController!.add(qj.compressImage(i));
-                  streamController!.add(qj.compressRGBImage(image));
+                  streamController.add(qj.compressRGBImage(image));
                 });
               },
               child: const Icon(Icons.fiber_manual_record),
             )
           : FloatingActionButton(
               tooltip: "Stop stream",
-              onPressed: () {
+              onPressed: () async {
                 if (!mounted) {
                   return;
                 }
@@ -288,8 +312,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
 
                 cameraController.stopImageStream();
-                streamController?.close();
-                streamController = null;
+                streamController.close();
+                await disconnectAllClients();
               },
               child: Icon(Icons.stop),
             ),
