@@ -26,19 +26,7 @@ class QuickjpegBindings {
     ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
   ) : _lookup = lookup;
 
-  /// A very short-lived native function.
-  ///
-  /// For very short-lived functions, it is fine to call them on the main isolate.
-  /// They will block the Dart execution while running the native function, so
-  /// only do this for native functions which are guaranteed to be short-lived.
-  int sum(int a, int b) {
-    return _sum(a, b);
-  }
-
-  late final _sumPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Int)>>('sum');
-  late final _sum = _sumPtr.asFunction<int Function(int, int)>();
-
+  /// Initializes the turbojpeg library
   int init() {
     return _init();
   }
@@ -46,7 +34,7 @@ class QuickjpegBindings {
   late final _initPtr = _lookup<ffi.NativeFunction<ffi.Int Function()>>('init');
   late final _init = _initPtr.asFunction<int Function()>();
 
-  /// Compresses separate YUV planes (YUV420)
+  /// Compresses separate YUV planes (YUV420) directly with turbojpeg
   Span compress_image(
     ffi.Pointer<ffi.Uint8> y,
     int y_len,
@@ -103,6 +91,148 @@ class QuickjpegBindings {
           int,
           int,
           ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          int,
+        )
+      >();
+
+  /// Compresses separate YUV planes by first converting them to ARGB with libyuv
+  /// and then compressing them as ARGB
+  Span compress_image_libyuv(
+    ffi.Pointer<ffi.Uint8> y,
+    int y_len,
+    int y_stride,
+    ffi.Pointer<ffi.Uint8> u,
+    int u_len,
+    int u_stride,
+    ffi.Pointer<ffi.Uint8> v,
+    int v_len,
+    int v_stride,
+    int width,
+    int height,
+  ) {
+    return _compress_image_libyuv(
+      y,
+      y_len,
+      y_stride,
+      u,
+      u_len,
+      u_stride,
+      v,
+      v_len,
+      v_stride,
+      width,
+      height,
+    );
+  }
+
+  late final _compress_image_libyuvPtr =
+      _lookup<
+        ffi.NativeFunction<
+          Span Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+          )
+        >
+      >('compress_image_libyuv');
+  late final _compress_image_libyuv = _compress_image_libyuvPtr
+      .asFunction<
+        Span Function(
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          int,
+        )
+      >();
+
+  /// Compresses weird YUV planes output by the camera plugin by first converting
+  /// them manually to ARGB
+  Span compress_image_manual(
+    ffi.Pointer<ffi.Uint8> y,
+    int y_len,
+    int y_stride,
+    int y_pixel_stride,
+    ffi.Pointer<ffi.Uint8> u,
+    int u_len,
+    int u_stride,
+    int u_pixel_stride,
+    ffi.Pointer<ffi.Uint8> v,
+    int v_len,
+    int v_stride,
+    int v_pixel_stride,
+    int width,
+    int height,
+  ) {
+    return _compress_image_manual(
+      y,
+      y_len,
+      y_stride,
+      y_pixel_stride,
+      u,
+      u_len,
+      u_stride,
+      u_pixel_stride,
+      v,
+      v_len,
+      v_stride,
+      v_pixel_stride,
+      width,
+      height,
+    );
+  }
+
+  late final _compress_image_manualPtr =
+      _lookup<
+        ffi.NativeFunction<
+          Span Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+          )
+        >
+      >('compress_image_manual');
+  late final _compress_image_manual = _compress_image_manualPtr
+      .asFunction<
+        Span Function(
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
           int,
           int,
           int,
@@ -170,6 +300,7 @@ class QuickjpegBindings {
         )
       >();
 
+  /// Compresses RGB images (without alpha)
   Span compress_rgb(
     ffi.Pointer<ffi.Uint8> src,
     int src_stride,
@@ -187,22 +318,6 @@ class QuickjpegBindings {
       >('compress_rgb');
   late final _compress_rgb = _compress_rgbPtr
       .asFunction<Span Function(ffi.Pointer<ffi.Uint8>, int, int, int)>();
-
-  /// A longer lived native function, which occupies the thread calling it.
-  ///
-  /// Do not call these kind of native functions in the main isolate. They will
-  /// block Dart execution. This will cause dropped frames in Flutter applications.
-  /// Instead, call these native functions on a separate isolate.
-  int sum_long_running(int a, int b) {
-    return _sum_long_running(a, b);
-  }
-
-  late final _sum_long_runningPtr =
-      _lookup<ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Int)>>(
-        'sum_long_running',
-      );
-  late final _sum_long_running = _sum_long_runningPtr
-      .asFunction<int Function(int, int)>();
 }
 
 final class Span extends ffi.Struct {

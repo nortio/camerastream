@@ -1,3 +1,11 @@
 {
     "cmake.sourceDirectory": "/home/saverio/progetti/dart/camerastream/plugins/quickjpeg/src",
+    "cmake.debugConfig": {
+        "args": [
+            "../test/code_cache/info",
+            "../test/code_cache/y.raw",
+            "../test/code_cache/u.raw",
+            "../test/code_cache/v.raw"
+        ]
+    },
 }

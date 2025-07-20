@@ -228,8 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 WakelockPlus.enable();
 
-                final stopwatch = Stopwatch();
-                stopwatch.start();
+                log("Logging timings to ${Directory.systemTemp.absolute.path}");
                 cameraController.startImageStream((i) {
                   //if (stopwatch.elapsedMicroseconds < 33300) {
                   //  //log("Skipped at ${stopwatch.elapsedMilliseconds}");
@@ -288,8 +287,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   final image = ImageUtils.convertCameraImage(i);
                   //final bytes = encoder.encode(image, singleFrame: true);
 
-                  //streamController!.add(qj.compressImage(i));
-                  streamController.add(qj.compressRGBImage(image));
+                  final jpeg = qj.compressRGBImage(image);
+
+                  streamController.add(jpeg);
                 });
               },
               child: const Icon(Icons.fiber_manual_record),

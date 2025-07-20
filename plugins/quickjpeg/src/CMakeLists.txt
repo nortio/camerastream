@@ -82,10 +82,12 @@ pkg_check_modules(turbojpeg REQUIRED libturbojpeg)
 target_link_libraries(quickjpeg PUBLIC turbojpeg)
 target_link_libraries("test" PUBLIC turbojpeg)
 target_link_libraries("test" PUBLIC yuv)
+target_link_libraries("test" PUBLIC m)
 target_include_directories("test" PUBLIC "${libyuv_SOURCE_DIR}/include/")
 endif()
 target_include_directories("quickjpeg" PUBLIC "${libyuv_SOURCE_DIR}/include/")
 target_link_libraries(quickjpeg PUBLIC yuv)
+target_link_libraries(quickjpeg PUBLIC m)
 
 if (ANDROID)
   # Support Android 15 16k page size

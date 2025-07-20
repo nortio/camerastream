@@ -1,5 +1,6 @@
 {
   pkgs ? import <nixpkgs> { },
+  unstable ? import <nixos-unstable> { },
 }:
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
@@ -14,6 +15,7 @@ pkgs.mkShell {
     gcc15
     ninja
     cppcheck
+    unstable.tracy
   ];
   buildInputs = with pkgs; [
     #libglvnd.dev

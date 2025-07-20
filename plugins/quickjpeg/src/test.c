@@ -50,7 +50,7 @@ struct Span read_file(const char *filename) {
     return (struct Span){.data = buffer, .len = length};
 }
 typedef struct Span Span;
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     assert(parlo_log_init(LOGTRACE) == 0);
     assert(argc >= 5);
 
@@ -74,11 +74,13 @@ int main(int argc, char** argv) {
              "(stride: %d)",
              width, height, y.len, y_stride, u.len, u_stride, v.len, v_stride);
     init();
-         Span res = compress_image(y.data, y.len, y_stride, u.data, u.len,
-       768, v.data, v.len, 768, width, height); 
+    Span res =
+        compress_image_manual(y.data, y.len, y_stride, 1, u.data, u.len, u_stride, 2,
+                              v.data, v.len, v_stride, 2, width, height);
     int dest_stride = width * 4 * sizeof(uint8_t);
     uint8_t *dest = malloc(dest_stride * height);
-    //Span res = compress_nv12(dest, dest_stride, y.data, y.len, 720, u.data,                        u.len,360, width, height);
+    // Span res = compress_nv12(dest, dest_stride, y.data, y.len, 720, u.data,
+    // u.len,360, width, height);
 
     tjhandle handle = tj3Init(TJINIT_COMPRESS);
 
