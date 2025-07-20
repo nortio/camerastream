@@ -318,6 +318,81 @@ class QuickjpegBindings {
       >('compress_rgb');
   late final _compress_rgb = _compress_rgbPtr
       .asFunction<Span Function(ffi.Pointer<ffi.Uint8>, int, int, int)>();
+
+  int convert(
+    ffi.Pointer<ffi.Uint8> y_buffer,
+    int y_len,
+    int y_stride,
+    int y_pixel_stride,
+    ffi.Pointer<ffi.Uint8> cb_buffer,
+    int u_len,
+    int u_stride,
+    int u_pixel_stride,
+    ffi.Pointer<ffi.Uint8> cr_buffer,
+    int v_len,
+    int v_stride,
+    int v_pixel_stride,
+    int width,
+    int height,
+  ) {
+    return _convert(
+      y_buffer,
+      y_len,
+      y_stride,
+      y_pixel_stride,
+      cb_buffer,
+      u_len,
+      u_stride,
+      u_pixel_stride,
+      cr_buffer,
+      v_len,
+      v_stride,
+      v_pixel_stride,
+      width,
+      height,
+    );
+  }
+
+  late final _convertPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+            ffi.Int,
+          )
+        >
+      >('convert');
+  late final _convert = _convertPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+          int,
+          int,
+          int,
+          int,
+        )
+      >();
 }
 
 final class Span extends ffi.Struct {

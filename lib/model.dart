@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:camerastream/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:quickjpeg/quickjpeg.dart' as qj;
 
 import 'bench.dart';
@@ -178,10 +179,10 @@ class AppModel extends ChangeNotifier {
               return;
             }
 
-            final image = ImageUtils.convertCameraImage(i);
+            //final image = ImageUtils.convertCameraImage(i);
             //final bytes = encoder.encode(image, singleFrame: true);
-            final jpeg = qj.compressRGBImage(image);
-            streamController.add(jpeg);
+            //final jpeg = qj.compressRGBImage(image);
+            streamController.add(qj.compressImageManual(i));
             break;
           }
         case ImageFormatGroup.unknown:
@@ -233,13 +234,20 @@ class AppModel extends ChangeNotifier {
 
 class BenchAppModel extends AppModel {
   int _tries;
+  int _initialTries = 0;
   Bench nativeBench = Bench("native");
   Bench dartBench = Bench("dart");
+
+  final voidStreamController = StreamController<Uint8List>();
 
   BenchAppModel(super.cameras, this._tries) {
     if (_tries < 1) {
       throw "Tries must be > 1";
     }
+    _initialTries = _tries;
+    voidStreamController.stream.listen((e) {
+      counter += e.length;
+    });
   }
 
   int get tries => _tries;
@@ -248,6 +256,8 @@ class BenchAppModel extends AppModel {
     notifyListeners();
   }
 
+  int counter = 0;
+
   @override
   bool start() {
     if (!cameraController.value.isInitialized) {
@@ -255,6 +265,8 @@ class BenchAppModel extends AppModel {
       return false;
     }
 
+    counter = 0;
+    _tries = _initialTries;
     started = true;
 
     log("Logging timings to ${Directory.systemTemp.absolute.path}");
@@ -262,11 +274,21 @@ class BenchAppModel extends AppModel {
       switch (i.format.group) {
         case ImageFormatGroup.yuv420:
           {
-            dartBench.run(() {
+            final j = dartBench.run(() {
               final image = ImageUtils.convertCameraImage(i);
               //final bytes = encoder.encode(image, singleFrame: true);
-              final jpeg = qj.compressRGBImage(image);
+              return qj.compressRGBImage(image);
             });
+
+            voidStreamController.add(j);
+
+            final jpeg = nativeBench.run(() {
+              //qj.convertOnlyTest(i);
+              return qj.compressImageManual(i);
+            });
+
+            voidStreamController.add(jpeg);
+
             break;
           }
         case ImageFormatGroup.unknown:
@@ -280,7 +302,7 @@ class BenchAppModel extends AppModel {
             return;
           }
       }
-      log("Completed try $tries");
+      //log("Completed try $tries");
       tries--;
       if (tries == 0) {
         close();
@@ -293,7 +315,16 @@ class BenchAppModel extends AppModel {
   void close() async {
     started = false;
     cameraController.stopImageStream();
-    dartBench.saveToFile();
-    nativeBench.saveToFile();
+
+    final downloads = await getDownloadsDirectory();
+
+    log("Saving to $downloads");
+    log("Counter: $counter");
+
+    dartBench.saveToFile(downloads!);
+    nativeBench.saveToFile(downloads);
+
+    dartBench.clear();
+    nativeBench.clear();
   }
 }

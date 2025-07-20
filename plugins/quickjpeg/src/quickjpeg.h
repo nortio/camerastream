@@ -66,3 +66,8 @@ FFI_PLUGIN_EXPORT Span compress_nv12(uint8_t *dest, int dest_stride, uint8_t *y,
  */
 FFI_PLUGIN_EXPORT Span compress_rgb(uint8_t *src, int src_stride, int width,
                                     int height);
+
+FFI_PLUGIN_EXPORT int convert(
+    uint8_t *y_buffer, size_t y_len, int y_stride, int y_pixel_stride, uint8_t *cb_buffer,
+    size_t u_len, int u_stride, int u_pixel_stride, uint8_t *cr_buffer, size_t v_len,
+    int v_stride, int v_pixel_stride, int width, int height);

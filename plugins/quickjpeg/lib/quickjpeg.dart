@@ -9,13 +9,36 @@ import 'package:image/image.dart' as imglib;
 
 import 'quickjpeg_bindings_generated.dart';
 
-void init() {
+void qjInit() {
   if (_bindings.init() == 0) {
     return;
   } else {
     throw "Init error";
   }
 }
+
+class Box {
+  Pointer<Uint8> data = nullptr;
+  int capacity = 0;
+
+  void copy(Uint8List list) {
+    if (list.lengthInBytes > capacity) {
+      if (data != nullptr) {
+        malloc.free(data);
+      }
+
+      data = malloc.allocate(list.lengthInBytes);
+      capacity = list.lengthInBytes;
+      log("Reallocated box with capacity $capacity");
+    }
+
+    data.asTypedList(list.lengthInBytes).setRange(0, list.lengthInBytes, list);
+  }
+}
+
+final y = Box();
+final u = Box();
+final v = Box();
 
 Pointer<Uint8> copyToNative(Uint8List data) {
   final res = calloc<Uint8>(data.lengthInBytes);
@@ -72,28 +95,28 @@ Uint8List compressImageManual(CameraImage image) {
   final yPlane = image.planes[0];
   final yBuffer = yPlane.bytes;
   final yStride = yPlane.bytesPerRow;
-  final y = copyToNative(yBuffer);
+  y.copy(yBuffer);
 
   final uPlane = image.planes[1];
   final uBuffer = uPlane.bytes;
   final uStride = uPlane.bytesPerRow;
-  final u = copyToNative(uBuffer);
+  u.copy(uBuffer);
 
   final vPlane = image.planes[2];
   final vBuffer = vPlane.bytes;
   final vStride = vPlane.bytesPerRow;
-  final v = copyToNative(vBuffer);
+  v.copy(vBuffer);
 
   final res = _bindings.compress_image_manual(
-    y,
+    y.data,
     yBuffer.lengthInBytes,
     yStride,
     yPlane.bytesPerPixel!,
-    u,
+    u.data,
     uBuffer.lengthInBytes,
     uStride,
     uPlane.bytesPerPixel!,
-    v,
+    v.data,
     vBuffer.lengthInBytes,
     vStride,
     vPlane.bytesPerPixel!,
@@ -101,15 +124,55 @@ Uint8List compressImageManual(CameraImage image) {
     image.height,
   );
 
-  calloc.free(y);
-  calloc.free(u);
-  calloc.free(v);
+  //calloc.free(y);
+  //calloc.free(u);
+  //calloc.free(v);
 
   if (res.data == nullptr) {
     throw "Compression error";
   }
 
   return res.data.asTypedList(res.len);
+}
+
+Uint8List convertOnlyTest(CameraImage image) {
+  final yPlane = image.planes[0];
+  final yBuffer = yPlane.bytes;
+  final yStride = yPlane.bytesPerRow;
+  y.copy(yBuffer);
+
+  final uPlane = image.planes[1];
+  final uBuffer = uPlane.bytes;
+  final uStride = uPlane.bytesPerRow;
+  u.copy(uBuffer);
+
+  final vPlane = image.planes[2];
+  final vBuffer = vPlane.bytes;
+  final vStride = vPlane.bytesPerRow;
+  v.copy(vBuffer);
+
+  final res = _bindings.convert(
+    y.data,
+    yBuffer.lengthInBytes,
+    yStride,
+    yPlane.bytesPerPixel!,
+    u.data,
+    uBuffer.lengthInBytes,
+    uStride,
+    uPlane.bytesPerPixel!,
+    v.data,
+    vBuffer.lengthInBytes,
+    vStride,
+    vPlane.bytesPerPixel!,
+    image.width,
+    image.height,
+  );
+
+  //calloc.free(y);
+  //calloc.free(u);
+  //calloc.free(v);
+
+  return Uint8List(0);
 }
 
 Uint8List compressRGBImage(imglib.Image image) {

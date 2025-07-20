@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
-import 'package:camerastream/benchapp.dart';
 import 'package:camerastream/model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,9 +12,9 @@ late List<CameraDescription> _cameras;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _cameras = await availableCameras();
-  qj.init();
-  //runApp(const MyApp());
-  runApp(BenchPage(cameras: _cameras));
+  qj.qjInit();
+  runApp(const MyApp());
+  //runApp(BenchPage(cameras: _cameras));
 }
 
 class MyApp extends StatelessWidget {

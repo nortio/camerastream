@@ -165,6 +165,54 @@ FFI_PLUGIN_EXPORT struct Span compress_image_manual(
     return (Span){.data = out, .len = out_size};
 }
 
+FFI_PLUGIN_EXPORT int convert(
+    uint8_t *y_buffer, size_t y_len, int y_stride, int y_pixel_stride, uint8_t *cb_buffer,
+    size_t u_len, int u_stride, int u_pixel_stride, uint8_t *cr_buffer, size_t v_len,
+    int v_stride, int v_pixel_stride, int width, int height) {
+
+    if (u_stride != v_stride) {
+        LOG_WARN("U Stride and V Stride are not equal (%d != %d)", u_stride,
+                 v_stride);
+    }
+    int uv_stride = MIN(u_stride, v_stride);
+
+    if (u_pixel_stride != v_pixel_stride) {
+        LOG_WARN("U Pixel Stride and V Pixel Stride are not equal (%d != %d)",
+                 u_pixel_stride, v_pixel_stride);
+    }
+    int uv_pixel_stride = MIN(u_pixel_stride, v_pixel_stride);
+
+    for (int h = 0; h < height; h++) {
+        int uvh = h / 2;
+
+        for (int w = 0; w < width; w++) {
+            int uvw = w / 2;
+
+            int y_index = (h * y_stride) + (w * y_pixel_stride);
+            int uv_index = (uvh * uv_stride) + (uvw * uv_pixel_stride);
+
+            uint8_t y = y_buffer[y_index];
+            uint8_t cb = cb_buffer[uv_index];
+            uint8_t cr = cr_buffer[uv_index];
+
+            int r = 298.082 / 256.0f * y + 408.583 / 256.0f * cr - 222.921;
+            int g = 298.082 / 256.0f * y - 100.291 / 256.0f * cb -
+                    208.120 / 256.0f * cr + 135.576;
+            int b = 298.082 / 256.0f * y + 516.412 / 256.0f * cb - 276.836;
+
+            r = clamp(r);
+            g = clamp(g);
+            b = clamp(b);
+
+            int i = (w * 3) + (width * 3) * h;
+            buffer[i] = r;
+            buffer[i + 1] = g;
+            buffer[i + 2] = b;
+        }
+    }
+    return 0; 
+}
+
 /**
  * Converts NV12 to XRGB and compresses that
  */

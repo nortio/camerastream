@@ -54,7 +54,20 @@ class _BenchWidgetState extends State<BenchWidget> {
   Widget build(BuildContext context) {
     return Consumer<BenchAppModel>(
       builder: (BuildContext context, BenchAppModel value, Widget? child) {
-        return value.started ? Text("${value.tries}") : Text("Stopped");
+        return value.started
+            ? Text("${value.tries}")
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Stopped"),
+                  TextButton(
+                    onPressed: () {
+                      value.start();
+                    },
+                    child: Text("start"),
+                  ),
+                ],
+              );
       },
     );
   }

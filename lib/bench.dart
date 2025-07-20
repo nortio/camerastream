@@ -1,15 +1,14 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 class Bench<T> {
   final stopwatch = Stopwatch();
-  final File file;
   final List<int> _data = [];
   List<int> get data => _data;
+  String name;
 
-  Bench(String name)
-    : file = File("${Directory.systemTemp.absolute.path}/timings_$name") {
-    file.writeAsString("", flush: true, mode: FileMode.write);
-  }
+  Bench(this.name);
 
   T run(T Function() fn) {
     stopwatch.start();
@@ -20,7 +19,13 @@ class Bench<T> {
     return res;
   }
 
-  void saveToFile() {
+  void clear() {
+    _data.clear();
+    stopwatch.reset();
+  }
+
+  void saveToFile(Directory dir) {
+    final file = File(p.join(dir.path, "timings_$name"));
     file.writeAsStringSync(_data.join("\n"), mode: FileMode.write, flush: true);
   }
 }

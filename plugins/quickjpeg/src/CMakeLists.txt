@@ -12,6 +12,9 @@ add_library(quickjpeg SHARED
   "log.c"
 )
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+target_compile_options(quickjpeg PUBLIC "-O3")
+message("BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 
 set_target_properties(quickjpeg PROPERTIES
   PUBLIC_HEADER quickjpeg.h
