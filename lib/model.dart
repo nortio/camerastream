@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
-import 'package:camerastream/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:quickjpeg/quickjpeg.dart' as qj;
@@ -275,9 +274,9 @@ class BenchAppModel extends AppModel {
         case ImageFormatGroup.yuv420:
           {
             final j = dartBench.run(() {
-              final image = ImageUtils.convertCameraImage(i);
+              //final image = ImageUtils.convertCameraImage(i);
               //final bytes = encoder.encode(image, singleFrame: true);
-              return qj.compressRGBImage(image);
+              //return qj.compressRGBImage(image);
             });
 
             voidStreamController.add(j);
