@@ -40,6 +40,7 @@ dependencies:
     path: "plugins/quickjpeg"
   camera_android: ^0.10.10+4
   wakelock_plus: ^1.3.2
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:
