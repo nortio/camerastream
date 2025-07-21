@@ -28,7 +28,7 @@ The app is very barebones at the moment. It by default selects the primary back 
 * Add simpler instructions to app
 * Make a website for download
 * F-Droid? Other app stores maybe?
-* Maybe switch to H264 and make a custom adapter for Windows (ffmpeg should be able to handle it fine with ffmpeg) (distant future)
+* Maybe switch to H264 and make a custom adapter for Windows (ffmpeg should be able to handle it fine on Linux) (distant future)
 
 ## Build
 
