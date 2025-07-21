@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:quickjpeg/quickjpeg.dart' as qj;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+//import 'benchapp.dart';
+
 late List<CameraDescription> _cameras;
 
 Future<void> main() async {
@@ -56,18 +58,19 @@ class _MyHomePageState extends State<MyHomePage> {
         return Scaffold(
           appBar: AppBar(title: Text(widget.title)),
           body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                !model.cameraDenied
-                    ? !model.started
-                          ? CameraPreview(model.cameraController)
-                          : Text(
-                              "Streaming! (Preview is disabled)\n${model.address != null ? "Address: http://${model.address?.address}:8080" : "Unknown address (check internet connection)"}\nConnected clients: ${model.connectedClients.length}",
-                            )
-                    : const Text("Camera use was denied"),
-              ],
-            ),
+            child: !model.cameraDenied
+                ? !model.started
+                      ? FittedBox(
+                          fit: BoxFit.contain,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: CameraPreview(model.cameraController),
+                          ),
+                        )
+                      : Text(
+                          "Streaming! (Preview is disabled)\n${model.address != null ? "Address: http://${model.address?.address}:8080" : "Unknown address (check internet connection)"}\nConnected clients: ${model.connectedClients.length}",
+                        )
+                : const Text("Camera use was denied"),
           ),
           floatingActionButton: !model.started
               ? FloatingActionButton(

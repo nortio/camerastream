@@ -273,13 +273,13 @@ class BenchAppModel extends AppModel {
       switch (i.format.group) {
         case ImageFormatGroup.yuv420:
           {
-            final j = dartBench.run(() {
-              //final image = ImageUtils.convertCameraImage(i);
-              //final bytes = encoder.encode(image, singleFrame: true);
-              //return qj.compressRGBImage(image);
-            });
+            //final j = dartBench.run(() {
+            //  //final image = ImageUtils.convertCameraImage(i);
+            //  //final bytes = encoder.encode(image, singleFrame: true);
+            //  //return qj.compressRGBImage(image);
+            //});
 
-            voidStreamController.add(j);
+            //voidStreamController.add(j);
 
             final jpeg = nativeBench.run(() {
               //qj.convertOnlyTest(i);

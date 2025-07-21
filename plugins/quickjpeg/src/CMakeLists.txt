@@ -12,8 +12,8 @@ add_library(quickjpeg SHARED
   "log.c"
 )
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-target_compile_options(quickjpeg PUBLIC "-O3")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -O3")
+#target_compile_options(quickjpeg PUBLIC "-O3")
 message("BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 
 set_target_properties(quickjpeg PROPERTIES
@@ -44,6 +44,7 @@ ExternalProject_Add(libjpegturbo
             -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
             -DWITH_JPEG8=OFF
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         GIT_REPOSITORY https://github.com/libjpeg-turbo/libjpeg-turbo.git
         GIT_TAG        3.1.1
         BUILD_BYPRODUCTS <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}turbojpeg${CMAKE_STATIC_LIBRARY_SUFFIX}
