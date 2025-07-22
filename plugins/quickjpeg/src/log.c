@@ -57,6 +57,11 @@ int parlo_log_destroy() {
     return 0;
 }
 
+int parlo_log_set_level(LogLevel level) {
+    current_level = level;
+    return 0;
+}
+
 const char *colors[] = {[LOGTRACE] = "\x1b[90m",
                         [LOGDEBUG] = "\x1b[90m",
                         [LOGINFO] = "\x1b[0m",

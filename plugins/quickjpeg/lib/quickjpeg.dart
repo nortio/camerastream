@@ -34,6 +34,13 @@ class Box {
 
     data.asTypedList(list.lengthInBytes).setRange(0, list.lengthInBytes, list);
   }
+
+  void dispose() {
+    if (data == nullptr) {
+      return;
+    }
+    calloc.free(data);
+  }
 }
 
 final y = Box();
@@ -133,46 +140,6 @@ Uint8List compressImageManual(CameraImage image) {
   }
 
   return res.data.asTypedList(res.len);
-}
-
-Uint8List convertOnlyTest(CameraImage image) {
-  final yPlane = image.planes[0];
-  final yBuffer = yPlane.bytes;
-  final yStride = yPlane.bytesPerRow;
-  y.copy(yBuffer);
-
-  final uPlane = image.planes[1];
-  final uBuffer = uPlane.bytes;
-  final uStride = uPlane.bytesPerRow;
-  u.copy(uBuffer);
-
-  final vPlane = image.planes[2];
-  final vBuffer = vPlane.bytes;
-  final vStride = vPlane.bytesPerRow;
-  v.copy(vBuffer);
-
-  final res = _bindings.convert(
-    y.data,
-    yBuffer.lengthInBytes,
-    yStride,
-    yPlane.bytesPerPixel!,
-    u.data,
-    uBuffer.lengthInBytes,
-    uStride,
-    uPlane.bytesPerPixel!,
-    v.data,
-    vBuffer.lengthInBytes,
-    vStride,
-    vPlane.bytesPerPixel!,
-    image.width,
-    image.height,
-  );
-
-  //calloc.free(y);
-  //calloc.free(u);
-  //calloc.free(v);
-
-  return Uint8List(0);
 }
 
 Uint8List compressRGBImage(imglib.Image image) {

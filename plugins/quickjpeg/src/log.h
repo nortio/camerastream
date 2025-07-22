@@ -32,7 +32,7 @@ void parlo_log(LogLevel level, const char* srcfile, int line, const char *fmt, .
 #define LOG_PERROR(str) parlo_log(LOGERROR, __FILE_NAME__, __LINE__, str ": %s", strerror(errno))
 
 int parlo_log_destroy();
-
+int parlo_log_set_level(LogLevel level);
 void print_buf(const unsigned char *buf, size_t buf_len);
 void print_buf_with_title(const char *title, const unsigned char *buf,
                           size_t buf_len);

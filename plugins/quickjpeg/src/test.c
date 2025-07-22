@@ -51,7 +51,7 @@ struct Span read_file(const char *filename) {
 }
 typedef struct Span Span;
 int main(int argc, char **argv) {
-    assert(parlo_log_init(LOGTRACE) == 0);
+    //assert(parlo_log_init(LOGTRACE) == 0);
     assert(argc >= 5);
 
     Span info = read_file(argv[1]);
@@ -74,6 +74,7 @@ int main(int argc, char **argv) {
              "(stride: %d)",
              width, height, y.len, y_stride, u.len, u_stride, v.len, v_stride);
     init();
+    parlo_log_set_level(LOGTRACE);
     Span res =
         compress_image_manual(y.data, y.len, y_stride, 1, u.data, u.len, u_stride, 2,
                               v.data, v.len, v_stride, 2, width, height);
