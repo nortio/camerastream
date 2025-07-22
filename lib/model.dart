@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:quickjpeg/quickjpeg.dart' as qj;
+import 'package:quickjpeg/quickjpeg.dart';
 
 import 'bench.dart';
 
@@ -181,7 +181,7 @@ class AppModel extends ChangeNotifier {
             //final image = ImageUtils.convertCameraImage(i);
             //final bytes = encoder.encode(image, singleFrame: true);
             //final jpeg = qj.compressRGBImage(image);
-            streamController.add(qj.compressImageManual(i));
+            streamController.add(QuickJpeg.compressImageManual(i));
             break;
           }
         case ImageFormatGroup.unknown:
@@ -207,11 +207,11 @@ class AppModel extends ChangeNotifier {
   }
 
   void dump(CameraImage i) {
-    final path = "${Directory.systemTemp.absolute.path}/temp.jpeg";
-    final file = File(path);
-    file.writeAsBytesSync(qj.compressImage(i));
+    //final path = "${Directory.systemTemp.absolute.path}/temp.jpeg";
+    //final file = File(path);
+    //file.writeAsBytesSync(qj.QuickJpeg.compressImage(i));
 
-    log("Saved jpeg to $path");
+    //log("Saved jpeg to $path");
     log("PLANES: ${i.planes.length}");
 
     File(
@@ -283,7 +283,7 @@ class BenchAppModel extends AppModel {
 
             final jpeg = nativeBench.run(() {
               //qj.convertOnlyTest(i);
-              return qj.compressImageManual(i);
+              return QuickJpeg.compressImageManual(i);
             });
 
             voidStreamController.add(jpeg);

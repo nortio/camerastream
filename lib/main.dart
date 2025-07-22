@@ -4,7 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:camerastream/model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quickjpeg/quickjpeg.dart' as qj;
+import 'package:quickjpeg/quickjpeg.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 //import 'benchapp.dart';
@@ -14,9 +14,10 @@ late List<CameraDescription> _cameras;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _cameras = await availableCameras();
-  qj.qjInit();
+  QuickJpeg.init();
   runApp(const MyApp());
   //runApp(BenchPage(cameras: _cameras));
+  QuickJpeg.dispose();
 }
 
 class MyApp extends StatelessWidget {
