@@ -12,8 +12,8 @@
 #define NULL_SPAN (Span){.data = NULL, .len = 0}
 
 tjhandle jhandle;
-// TODO: use a proper dynamic array
 
+// TODO: use a proper dynamic array
 typedef struct Box {
     uint8_t *buffer;
     size_t capacity;
@@ -34,89 +34,6 @@ static inline void box_reserve(Box *box, size_t amount) {
 
 Box android_rgba_buffer;
 uint8_t *buffer = NULL;
-
-FFI_PLUGIN_EXPORT Span compress_image(uint8_t *y, size_t y_len, int y_stride,
-                                      uint8_t *u, size_t u_len, int u_stride,
-                                      uint8_t *v, size_t v_len, int v_stride,
-                                      int width, int height) {
-    const uint8_t *planes[3] = {y, u, v};
-    const int strides[3] = {y_stride, u_stride, v_stride};
-    uint8_t *out = NULL;
-    size_t out_size = 0;
-
-    LOG_TRACE("Image size: %dx%d, uvstride: %d", width, height, u_stride);
-
-    size_t y_size = tj3YUVPlaneSize(0, width, y_stride, height, TJSAMP_420);
-    if (y_size != y_len) {
-        LOG_ERROR("Y Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  y_size, y_len, y_stride);
-    }
-    size_t u_size = tj3YUVPlaneSize(1, width, u_stride, height, TJSAMP_420);
-    if (u_size != u_len) {
-        LOG_ERROR("U Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  u_size, u_len, u_stride);
-    }
-    size_t v_size = tj3YUVPlaneSize(2, width, v_stride, height, TJSAMP_420);
-    if (v_size != v_len) {
-        LOG_ERROR("V Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  v_size, v_len, v_stride);
-    }
-
-    if (tj3CompressFromYUVPlanes8(jhandle, planes, width, strides, height, &out,
-                                  &out_size) < 0) {
-        LOG_ERROR("Failed to encode YUV image to JPEG: %s",
-                  tj3GetErrorStr(jhandle));
-        return NULL_SPAN;
-    }
-
-    LOG_DEBUG("Output size: %lu", out_size);
-
-    return (Span){.data = out, .len = out_size};
-}
-
-FFI_PLUGIN_EXPORT Span compress_image_libyuv(uint8_t *y, size_t y_len,
-                                             int y_stride, uint8_t *u,
-                                             size_t u_len, int u_stride,
-                                             uint8_t *v, size_t v_len,
-                                             int v_stride, int width,
-                                             int height) {
-    const uint8_t *planes[3] = {y, u, v};
-    const int strides[3] = {y_stride, u_stride, v_stride};
-    uint8_t *out = NULL;
-    size_t out_size = 0;
-
-    LOG_TRACE("Image size: %dx%d, uvstride: %d", width, height, u_stride);
-
-    size_t y_size = tj3YUVPlaneSize(0, width, y_stride, height, TJSAMP_420);
-    if (y_size != y_len) {
-        LOG_ERROR("Y Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  y_size, y_len, y_stride);
-    }
-    size_t u_size = tj3YUVPlaneSize(1, width, u_stride, height, TJSAMP_420);
-    if (u_size != u_len) {
-        LOG_ERROR("U Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  u_size, u_len, u_stride);
-    }
-    size_t v_size = tj3YUVPlaneSize(2, width, v_stride, height, TJSAMP_420);
-    if (v_size != v_len) {
-        LOG_ERROR("V Plane size mismatch: expected %lu, got %lu (stride: %d)",
-                  v_size, v_len, v_stride);
-    }
-
-    I420ToARGB(y, y_stride, u, u_stride, v, v_stride, buffer, width * 4, width,
-               height);
-
-    if (tj3Compress8(jhandle, buffer, width, width * 4, height, TJPF_ARGB, &out,
-                     &out_size) < 0) {
-        LOG_ERROR("Failed to encode YUV (to ARGB) image to JPEG: %s",
-                  tj3GetErrorStr(jhandle));
-        return NULL_SPAN;
-    }
-
-    LOG_DEBUG("Output size: %lu", out_size);
-
-    return (Span){.data = out, .len = out_size};
-}
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -155,6 +72,7 @@ compress_image_manual(uint8_t *y_buffer, size_t y_len, int y_stride,
         return NULL_SPAN;
     }
 
+    // TODO: start reusing buffers instead of allocating new ones for each jpeg frame
     uint8_t *out = NULL;
     size_t out_size = 0;
 
@@ -170,7 +88,10 @@ compress_image_manual(uint8_t *y_buffer, size_t y_len, int y_stride,
     return (Span){.data = out, .len = out_size};
 }
 
-FFI_PLUGIN_EXPORT int convert(uint8_t *y_buffer, size_t y_len, int y_stride,
+/**
+ * Unused, this is old conversion code (replaced by Android420ToABGR, provided by libyuv)
+ */
+static int convert(uint8_t *y_buffer, size_t y_len, int y_stride,
                               int y_pixel_stride, uint8_t *cb_buffer,
                               size_t u_len, int u_stride, int u_pixel_stride,
                               uint8_t *cr_buffer, size_t v_len, int v_stride,
@@ -201,6 +122,7 @@ FFI_PLUGIN_EXPORT int convert(uint8_t *y_buffer, size_t y_len, int y_stride,
             uint8_t cb = cb_buffer[uv_index];
             uint8_t cr = cr_buffer[uv_index];
 
+            // BT.601
             int r = 298.082 / 256.0f * y + 408.583 / 256.0f * cr - 222.921;
             int g = 298.082 / 256.0f * y - 100.291 / 256.0f * cb -
                     208.120 / 256.0f * cr + 135.576;
@@ -220,31 +142,9 @@ FFI_PLUGIN_EXPORT int convert(uint8_t *y_buffer, size_t y_len, int y_stride,
 }
 
 /**
- * Converts NV12 to XRGB and compresses that
+ * Also unused, might be useful
  */
-FFI_PLUGIN_EXPORT Span compress_nv12(uint8_t *dest, int dest_stride, uint8_t *y,
-                                     size_t y_len, int y_stride, uint8_t *uv,
-                                     size_t uv_len, int uv_stride, int width,
-                                     int height) {
-    uint8_t *out = NULL;
-    size_t out_size = 0;
-
-    if (NV12ToARGB(y, y_stride, uv, uv_stride, dest, dest_stride, width,
-                   height)) {
-        LOG_ERROR("NV12 to ARGB conversion failed");
-        return NULL_SPAN;
-    }
-
-    if (tj3Compress8(jhandle, dest, width, dest_stride, height, TJPF_ARGB, &out,
-                     &out_size) < 0) {
-        LOG_ERROR("Failed to encode NV12 image to JPEG: %s",
-                  tj3GetErrorStr(jhandle));
-    }
-
-    return (Span){.data = out, .len = out_size};
-}
-
-FFI_PLUGIN_EXPORT Span compress_rgb(uint8_t *src, int src_stride, int width,
+static Span compress_rgb(uint8_t *src, int src_stride, int width,
                                     int height) {
     uint8_t *out = NULL;
     size_t out_size = 0;

@@ -1,45 +1,11 @@
-import 'dart:developer';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
-import 'package:ffi/ffi.dart';
-import 'package:image/image.dart' as imglib;
 
+import 'box.dart';
 import 'quickjpeg_bindings_generated.dart';
-
-class Box {
-  Pointer<Uint8> data = nullptr;
-  int capacity = 0;
-
-  void copy(Uint8List list) {
-    if (list.lengthInBytes > capacity) {
-      if (data != nullptr) {
-        malloc.free(data);
-      }
-
-      data = malloc.allocate(list.lengthInBytes);
-      capacity = list.lengthInBytes;
-      log("Reallocated box with capacity $capacity");
-    }
-
-    data.asTypedList(list.lengthInBytes).setRange(0, list.lengthInBytes, list);
-  }
-
-  void dispose() {
-    if (data == nullptr) {
-      return;
-    }
-    calloc.free(data);
-  }
-}
-
-Pointer<Uint8> copyToNative(Uint8List data) {
-  final res = calloc<Uint8>(data.lengthInBytes);
-  res.asTypedList(data.lengthInBytes).setRange(0, data.lengthInBytes, data);
-  return res;
-}
 
 const String _libName = 'quickjpeg';
 
@@ -123,6 +89,7 @@ class QuickJpeg {
     return res.data.asTypedList(res.len);
   }
 
+  /*
   static Uint8List compressRGBImage(imglib.Image image) {
     final data = image.data;
     if (data == null) {
@@ -140,4 +107,5 @@ class QuickJpeg {
     calloc.free(copy);
     return res.data.asTypedList(res.len);
   }
+*/
 }
